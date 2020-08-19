@@ -98,13 +98,15 @@ model1 <- lme( liking ~ physically.tired + mentally.tired + sleep.quality + slee
 
 summary(model1)
 Figure1 <- plot_model(model1, type="pred", show.data =T, jitter=0.05, title = "") 
-Figure1$A <- Figure1$physically.tired + theme_bw() + scale_y_continuous(name="Liking of others", limits=c(1,7), breaks=seq(1,7), labels=paste(seq(1,7),sep=",")) + scale_x_continuous(name="Physical Tiredness", limits=c(1,10), breaks=seq(1,10), labels=paste(seq(1,10),sep=","))
-Figure1$B <- Figure1$mentally.tired + theme_bw() + scale_y_continuous(name="Liking of others", limits=c(1,7), breaks=seq(1,7), labels=paste(seq(1,7),sep=",")) + scale_x_continuous(name="Mental Tiredness", limits=c(1,10), breaks=seq(1,10), labels=paste(seq(1,10),sep=","))
-Figure1$C <- Figure1$sleep.quality + theme_bw() + scale_y_continuous(name="Liking of others", limits=c(1,7), breaks=seq(1,7), labels=paste(seq(1,7),sep=",")) + scale_x_continuous(name="Sleep Quality", limits=c(1,5), breaks=seq(1,5), labels=paste(seq(1,5),sep=","))
-Figure1$D <- Figure1$sleep.time + theme_bw() + scale_y_continuous(name="Liking of others", limits=c(1,7), breaks=seq(1,7), labels=paste(seq(1,7),sep=",")) + scale_x_continuous(name="Sleep duration (hours)", limits=c(90,690), breaks=c(120,240,360,480,600), labels=c(2,4,6,8,10))
+Figure1$A <- Figure1$physically.tired + theme_bw() + scale_y_continuous(name="Liking one's partner", limits=c(1,7), breaks=seq(1,7), labels=paste(seq(1,7),sep=",")) + scale_x_continuous(name="Physical Tiredness", limits=c(1,10), breaks=seq(1,10), labels=paste(seq(1,10),sep=",")) + labs(tag = "A")
+Figure1$B <- Figure1$mentally.tired + theme_bw() + scale_y_continuous(name="Liking one's partner", limits=c(1,7), breaks=seq(1,7), labels=paste(seq(1,7),sep=",")) + scale_x_continuous(name="Mental Tiredness", limits=c(1,10), breaks=seq(1,10), labels=paste(seq(1,10),sep=","))+ labs(tag = "B")
+Figure1$C <- Figure1$sleep.quality + theme_bw() + scale_y_continuous(name="Liking one's partner", limits=c(1,7), breaks=seq(1,7), labels=paste(seq(1,7),sep=",")) + scale_x_continuous(name="Sleep Quality", limits=c(1,5), breaks=seq(1,5), labels=paste(seq(1,5),sep=","))+ labs(tag = "C")
+Figure1$D <- Figure1$sleep.time + theme_bw() + scale_y_continuous(name="Liking one's partner", limits=c(1,7), breaks=seq(1,7), labels=paste(seq(1,7),sep=",")) + scale_x_continuous(name="Sleep duration (hours)", limits=c(90,690), breaks=c(120,240,360,480,600), labels=c(2,4,6,8,10))+ labs(tag = "D")
 
 Figure1$grid <- plot_grid(list(Figure1$A,Figure1$B,Figure1$C,Figure1$D), margin = c(0.2, 0.2, 0.2, 0.2))
 ggsave(plot=Figure1$grid, "plots/Figure1.pdf", device = "pdf", units = "cm", width = 20, height = 20)
+
+#^^confidence intervals based on ggeffects prediction https://strengejacke.github.io/ggeffects/articles/ggeffects.html
 
 # Footnote 1 Analysis with Off-scale Responses Removed
 # Removing off-scale responses
@@ -136,11 +138,12 @@ summary(model2)
 # All responses
 write.table( as.data.frame(matrix( c(levels( as.factor(tolower(subset(Study1data,INT7!="")$INT7)) ), "", "" ), ncol=4) ), "tables/TableS1a - study1_sleepqualityresponses.csv", sep=",", row.names=F, col.names=F )
 # Coding of responses
-table.s1 <- c( "2", paste( levels(as.factor(tolower(subset(Study1data, Sleep_quality==2)$INT7) ) ), collapse=", " ) )
+table.s1 <- c( "1", paste( levels(as.factor(tolower(subset(Study1data, Sleep_quality==1)$INT7) ) ), collapse=", " ) )
+table.s1 <- rbind(table.s1, c( "2", paste( levels(as.factor(tolower(subset(Study1data, Sleep_quality==2)$INT7) ) ), collapse=", " ) ))
 table.s1 <- rbind(table.s1, c( "3", paste( levels(as.factor(tolower(subset(Study1data, Sleep_quality==3)$INT7) ) ), collapse=", " ) ) )
 table.s1 <- rbind(table.s1, c( "4", paste( levels(as.factor(tolower(subset(Study1data, Sleep_quality==4)$INT7) ) ), collapse=", " ) ) )
 table.s1 <- rbind(table.s1, c( "5", paste( levels(as.factor(tolower(subset(Study1data, Sleep_quality==5)$INT7) ) ), collapse=", " ) ) )
-write.table( table.s1, "tables/TableS1b - study1_sleepqualitycoding.csv", row.names=F, col.names=F, sep=",", append=T )
+write.table( table.s1, "tables/TableS1b - study1_sleepqualitycoding.csv", row.names=F, col.names=F, sep=",", append=F )
 
 # Figure S1: correlations between sleep/fatigue measures
 # Correlations Between Sleep Measures
@@ -160,34 +163,34 @@ model.mentally.tired <- lme( liking ~ mentally.tired, random=~1|Pair, data=Study
 model.sleep.quality <- lme( liking ~ sleep.quality, random=~1|Pair, data=Study1data, na.action="na.exclude" ); summary( model.sleep.quality )
 model.sleep.time <- lme( liking ~ sleep.time, random=~1|Pair, data=Study1data, na.action="na.exclude" ); summary( model.sleep.time )
 
-table.s2 <- rbind( c( c(summary(model1)$tTable[1,],NA), 
-                      c(summary(model.physically.tired)$tTable[1,],NA ), 
-                      c(summary(model.mentally.tired)$tTable[1,],NA ),
-                      c(summary(model.sleep.quality)$tTable[1,],NA ),
-                      c(summary(model.sleep.time)$tTable[1,],NA )) )
+table.s2 <- rbind( c( c(intervals(model1, which = "fixed")$fixed[1,c(1,3)],summary(model1)$tTable[1,],NA), 
+                      c(intervals(model.physically.tired, which = "fixed")$fixed[1,c(1,3)],summary(model.physically.tired)$tTable[1,],NA ), 
+                      c(intervals(model.mentally.tired, which = "fixed")$fixed[1,c(1,3)],summary(model.mentally.tired)$tTable[1,],NA ),
+                      c(intervals(model.sleep.quality, which = "fixed")$fixed[1,c(1,3)],summary(model.sleep.quality)$tTable[1,],NA ),
+                      c(intervals(model.sleep.time, which = "fixed")$fixed[1,c(1,3)],summary(model.sleep.time)$tTable[1,],NA )) )
 
-table.s2 <- rbind( table.s2, c( c(summary(model)$tTable[2,],sqrt(summary(model)$tTable[2, 4]**2/(summary(model)$tTable[2, 4]**2+summary(model)$tTable[2, 3])) ), 
-                                c(summary(model.physically.tired)$tTable[2,],sqrt(summary(model.physically.tired)$tTable[2, 4]**2/(summary(model.physically.tired)$tTable[2, 4]**2+summary(model.physically.tired)$tTable[2, 3])) ), 
-                                c(NA, NA, NA, NA, NA, NA),
-                                c(NA, NA, NA, NA, NA, NA),
-                                c(NA, NA, NA, NA, NA, NA)) )
-table.s2 <- rbind( table.s2, c( c(summary(model)$tTable[3,],sqrt(summary(model)$tTable[3, 4]**2/(summary(model)$tTable[3, 4]**2+summary(model)$tTable[3, 3])) ), 
-                                c(NA, NA, NA, NA, NA, NA), 
-                                c(summary(model.mentally.tired)$tTable[2,],sqrt(summary(model.mentally.tired)$tTable[2, 4]**2/(summary(model.mentally.tired)$tTable[2, 4]**2+summary(model.mentally.tired)$tTable[2, 3])) ),
-                                c(NA, NA, NA, NA, NA, NA),
-                                c(NA, NA, NA, NA, NA, NA)) )
-table.s2 <- rbind( table.s2, c( c(summary(model)$tTable[4,],sqrt(summary(model)$tTable[4, 4]**2/(summary(model)$tTable[4, 4]**2+summary(model)$tTable[4, 3])) ), 
-                                c(NA, NA, NA, NA, NA, NA), 
-                                c(NA, NA, NA, NA, NA, NA),
-                                c(summary(model.sleep.quality)$tTable[2,],sqrt(summary(model.sleep.quality)$tTable[2, 4]**2/(summary(model.sleep.quality)$tTable[2, 4]**2+summary(model.sleep.quality)$tTable[2, 3])) ),
-                                c(NA, NA, NA, NA, NA, NA)) )
-table.s2 <- rbind( table.s2, c( c(summary(model)$tTable[5,],sqrt(summary(model)$tTable[5, 4]**2/(summary(model)$tTable[5, 4]**2+summary(model)$tTable[5, 3])) ), 
-                                c(NA, NA, NA, NA, NA, NA), 
-                                c(NA, NA, NA, NA, NA, NA),
-                                c(NA, NA, NA, NA, NA, NA),
-                                c(summary(model.sleep.time)$tTable[2,],sqrt(summary(model.sleep.time)$tTable[2, 4]**2/(summary(model.sleep.time)$tTable[2, 4]**2+summary(model.sleep.time)$tTable[2, 3])) )) )
+table.s2 <- rbind( table.s2, c( c(intervals(model1, which = "fixed")$fixed[2,c(1,3)],summary(model1)$tTable[2,],sqrt(summary(model1)$tTable[2, 4]**2/(summary(model1)$tTable[2, 4]**2+summary(model1)$tTable[2, 3])) ), 
+                                c(intervals(model.physically.tired, which = "fixed")$fixed[2,c(1,3)],summary(model.physically.tired)$tTable[2,],sqrt(summary(model.physically.tired)$tTable[2, 4]**2/(summary(model.physically.tired)$tTable[2, 4]**2+summary(model.physically.tired)$tTable[2, 3])) ), 
+                                c(NA, NA, NA, NA, NA, NA,NA,NA),
+                                c(NA, NA, NA, NA, NA, NA,NA,NA),
+                                c(NA, NA, NA, NA, NA, NA,NA,NA)) )
+table.s2 <- rbind( table.s2, c( c(intervals(model1, which = "fixed")$fixed[3,c(1,3)],summary(model1)$tTable[3,],sqrt(summary(model1)$tTable[3, 4]**2/(summary(model1)$tTable[3, 4]**2+summary(model1)$tTable[3, 3])) ), 
+                                c(NA, NA, NA, NA, NA, NA,NA,NA), 
+                                c(intervals(model.mentally.tired, which = "fixed")$fixed[2,c(1,3)],summary(model.mentally.tired)$tTable[2,],sqrt(summary(model.mentally.tired)$tTable[2, 4]**2/(summary(model.mentally.tired)$tTable[2, 4]**2+summary(model.mentally.tired)$tTable[2, 3])) ),
+                                c(NA, NA, NA, NA, NA, NA,NA,NA),
+                                c(NA, NA, NA, NA, NA, NA,NA,NA)) )
+table.s2 <- rbind( table.s2, c( c(intervals(model1, which = "fixed")$fixed[4,c(1,3)],summary(model1)$tTable[4,],sqrt(summary(model1)$tTable[4, 4]**2/(summary(model1)$tTable[4, 4]**2+summary(model1)$tTable[4, 3])) ), 
+                                c(NA, NA, NA, NA, NA, NA,NA,NA), 
+                                c(NA, NA, NA, NA, NA, NA,NA,NA),
+                                c(intervals(model.sleep.quality, which = "fixed")$fixed[2,c(1,3)],summary(model.sleep.quality)$tTable[2,],sqrt(summary(model.sleep.quality)$tTable[2, 4]**2/(summary(model.sleep.quality)$tTable[2, 4]**2+summary(model.sleep.quality)$tTable[2, 3])) ),
+                                c(NA, NA, NA, NA, NA, NA,NA,NA)) )
+table.s2 <- rbind( table.s2, c( c(intervals(model1, which = "fixed")$fixed[5,c(1,3)],summary(model1)$tTable[5,],sqrt(summary(model1)$tTable[5, 4]**2/(summary(model1)$tTable[5, 4]**2+summary(model1)$tTable[5, 3])) ), 
+                                c(NA, NA, NA, NA, NA, NA,NA,NA), 
+                                c(NA, NA, NA, NA, NA, NA,NA,NA),
+                                c(NA, NA, NA, NA, NA, NA,NA,NA),
+                                c(intervals(model.sleep.time, which = "fixed")$fixed[2,c(1,3)],summary(model.sleep.time)$tTable[2,],sqrt(summary(model.sleep.time)$tTable[2, 4]**2/(summary(model.sleep.time)$tTable[2, 4]**2+summary(model.sleep.time)$tTable[2, 3])) )) )
 row.names( table.s2 ) <- c("Intercept", "Physical Tiredness", "Mental Tiredness", "Sleep Quality", "Sleep Time")
-write.table( round(table.s2,2), "tables/TableS2 - study1_howmuchilikepartner.csv", sep=",", na="")
+write.table( round(table.s2,2), "tables/TableS2 - study1_howmuchilikepartner.csv", sep=",", na="",col.names = NA)
 
 # Table S3: tiredness/sleep -> how much my partner likes me (multivariate and bivariate models)
 # Bivariate Analyses: tiredness/sleep -> how much my partner likes me
@@ -196,33 +199,34 @@ model.mentally.tired2 <- lme( liked_by_partner ~ mentally.tired, random=~1|Pair,
 model.sleep.quality2 <- lme( liked_by_partner ~ sleep.quality, random=~1|Pair, data=Study1data, na.action="na.exclude" ); summary( model.sleep.quality2 )
 model.sleep.time2 <- lme( liked_by_partner ~ sleep.time, random=~1|Pair, data=Study1data, na.action="na.exclude" ); summary( model.sleep.time2 )
 
-table.s3 <- rbind( c( c(summary(model2)$tTable[1,],NA), 
-                      c(summary(model.physically.tired2)$tTable[1,],NA ), 
-                      c(summary(model.mentally.tired2)$tTable[1,],NA ),
-                      c(summary(model.sleep.quality2)$tTable[1,],NA ),
-                      c(summary(model.sleep.time2)$tTable[1,],NA )) )
-table.s3 <- rbind( table.s3, c( c(summary(model2)$tTable[2,],sqrt(summary(model2)$tTable[2, 4]**2/(summary(model2)$tTable[2, 4]**2+summary(model2)$tTable[2, 3])) ), 
-                                c(summary(model.physically.tired2)$tTable[2,],sqrt(summary(model.physically.tired2)$tTable[2, 4]**2/(summary(model.physically.tired2)$tTable[2, 4]**2+summary(model.physically.tired2)$tTable[2, 3])) ), 
-                                c(NA, NA, NA, NA, NA, NA),
-                                c(NA, NA, NA, NA, NA, NA),
-                                c(NA, NA, NA, NA, NA, NA)) )
-table.s3 <- rbind( table.s3, c( c(summary(model2)$tTable[3,],sqrt(summary(model2)$tTable[3, 4]**2/(summary(model2)$tTable[3, 4]**2+summary(model2)$tTable[3, 3])) ), 
-                                c(NA, NA, NA, NA, NA, NA), 
-                                c(summary(model.mentally.tired2)$tTable[2,],sqrt(summary(model.mentally.tired2)$tTable[2, 4]**2/(summary(model.mentally.tired2)$tTable[2, 4]**2+summary(model.mentally.tired2)$tTable[2, 3])) ),
-                                c(NA, NA, NA, NA, NA, NA),
-                                c(NA, NA, NA, NA, NA, NA)) )
-table.s3 <- rbind( table.s3, c( c(summary(model2)$tTable[4,],sqrt(summary(model2)$tTable[4, 4]**2/(summary(model2)$tTable[4, 4]**2+summary(model2)$tTable[4, 3])) ), 
-                                c(NA, NA, NA, NA, NA, NA), 
-                                c(NA, NA, NA, NA, NA, NA),
-                                c(summary(model.sleep.quality2)$tTable[2,],sqrt(summary(model.sleep.quality2)$tTable[2, 4]**2/(summary(model.sleep.quality2)$tTable[2, 4]**2+summary(model.sleep.quality2)$tTable[2, 3])) ),
-                                c(NA, NA, NA, NA, NA, NA)) )
-table.s3 <- rbind( table.s3, c( c(summary(model2)$tTable[5,],sqrt(summary(model2)$tTable[5, 4]**2/(summary(model2)$tTable[5, 4]**2+summary(model2)$tTable[5, 3])) ), 
-                                c(NA, NA, NA, NA, NA, NA), 
-                                c(NA, NA, NA, NA, NA, NA),
-                                c(NA, NA, NA, NA, NA, NA),
-                                c(summary(model.sleep.time2)$tTable[2,],sqrt(summary(model.sleep.time2)$tTable[2, 4]**2/(summary(model.sleep.time2)$tTable[2, 4]**2+summary(model.sleep.time2)$tTable[2, 3])) )) )
+table.s3 <- rbind( c( c(intervals(model2, which = "fixed")$fixed[1,c(1,3)],summary(model2)$tTable[1,],NA), 
+                      c(intervals(model.physically.tired2, which = "fixed")$fixed[1,c(1,3)],summary(model.physically.tired2)$tTable[1,],NA ), 
+                      c(intervals(model.mentally.tired2, which = "fixed")$fixed[1,c(1,3)],summary(model.mentally.tired2)$tTable[1,],NA ),
+                      c(intervals((model.sleep.quality2), which = "fixed")$fixed[1,c(1,3)],summary(model.sleep.quality2)$tTable[1,],NA ),
+                      c(intervals(model.sleep.time2, which = "fixed")$fixed[1,c(1,3)],summary(model.sleep.time2)$tTable[1,],NA )) )
+
+table.s3 <- rbind( table.s3, c( c(intervals(model2, which = "fixed")$fixed[2,c(1,3)],summary(model2)$tTable[2,],sqrt(summary(model2)$tTable[2, 4]**2/(summary(model2)$tTable[2, 4]**2+summary(model2)$tTable[2, 3])) ), 
+                                c(intervals(model.physically.tired2, which = "fixed")$fixed[2,c(1,3)],summary(model.physically.tired2)$tTable[2,],sqrt(summary(model.physically.tired2)$tTable[2, 4]**2/(summary(model.physically.tired2)$tTable[2, 4]**2+summary(model.physically.tired2)$tTable[2, 3])) ), 
+                                c(NA, NA, NA, NA, NA, NA, NA, NA),
+                                c(NA, NA, NA, NA, NA, NA, NA, NA),
+                                c(NA, NA, NA, NA, NA, NA, NA, NA)) )
+table.s3 <- rbind( table.s3, c( c(intervals(model2, which = "fixed")$fixed[3,c(1,3)],summary(model2)$tTable[3,],sqrt(summary(model2)$tTable[3, 4]**2/(summary(model2)$tTable[3, 4]**2+summary(model2)$tTable[3, 3])) ), 
+                                c(NA, NA, NA, NA, NA, NA, NA, NA), 
+                                c(intervals(model.mentally.tired2, which = "fixed")$fixed[2,c(1,3)],summary(model.mentally.tired2)$tTable[2,],sqrt(summary(model.mentally.tired2)$tTable[2, 4]**2/(summary(model.mentally.tired2)$tTable[2, 4]**2+summary(model.mentally.tired2)$tTable[2, 3])) ),
+                                c(NA, NA, NA, NA, NA, NA, NA, NA),
+                                c(NA, NA, NA, NA, NA, NA, NA, NA)) )
+table.s3 <- rbind( table.s3, c( c(intervals(model2, which = "fixed")$fixed[4,c(1,3)],summary(model2)$tTable[4,],sqrt(summary(model2)$tTable[4, 4]**2/(summary(model2)$tTable[4, 4]**2+summary(model2)$tTable[4, 3])) ), 
+                                c(NA, NA, NA, NA, NA, NA, NA, NA), 
+                                c(NA, NA, NA, NA, NA, NA, NA, NA),
+                                c(intervals(model.sleep.quality2, which = "fixed")$fixed[2,c(1,3)],summary(model.sleep.quality2)$tTable[2,],sqrt(summary(model.sleep.quality2)$tTable[2, 4]**2/(summary(model.sleep.quality2)$tTable[2, 4]**2+summary(model.sleep.quality2)$tTable[2, 3])) ),
+                                c(NA, NA, NA, NA, NA, NA, NA, NA)) )
+table.s3 <- rbind( table.s3, c( c(intervals(model2, which = "fixed")$fixed[5,c(1,3)],summary(model2)$tTable[5,],sqrt(summary(model2)$tTable[5, 4]**2/(summary(model2)$tTable[5, 4]**2+summary(model2)$tTable[5, 3])) ), 
+                                c(NA, NA, NA, NA, NA, NA, NA, NA), 
+                                c(NA, NA, NA, NA, NA, NA, NA, NA),
+                                c(NA, NA, NA, NA, NA, NA, NA, NA),
+                                c(intervals(model.sleep.time2, which = "fixed")$fixed[2,c(1,3)],summary(model.sleep.time2)$tTable[2,],sqrt(summary(model.sleep.time2)$tTable[2, 4]**2/(summary(model.sleep.time2)$tTable[2, 4]**2+summary(model.sleep.time2)$tTable[2, 3])) )) )
 row.names( table.s3 ) <- c("Intercept", "Physical Tiredness", "Mental Tiredness", "Sleep Quality", "Sleep Time")
-write.table( round(table.s3,2), "tables/TableS3 - study1_howmuchpartnerlikeme.csv", sep=",", na="")
+write.table( round(table.s3,2), "tables/TableS3 - study1_howmuchpartnerlikeme.csv", sep=",", na="",col.names = NA)
 
 #########################################################################################################
 ########################### NOW FULL FIRST IMPRESSIONS QUESTIONNAIRE ####################################
@@ -241,33 +245,34 @@ fi.model.mentally.tired <- lme( first.impressions ~ mentally.tired, random=~1|Pa
 fi.model.sleep.quality <- lme( first.impressions ~ sleep.quality, random=~1|Pair, data=Study1data, na.action="na.exclude" ); summary( fi.model.sleep.quality )
 fi.model.sleep.time <- lme( first.impressions ~ sleep.time, random=~1|Pair, data=Study1data, na.action="na.exclude" ); summary( fi.model.sleep.time )
 
-table.s4 <- rbind( c( c(summary(fi.model)$tTable[1,],NA ), 
-                      c(summary(fi.model.physically.tired)$tTable[1,],NA ), 
-                      c(summary(fi.model.mentally.tired)$tTable[1,],NA ),
-                      c(summary(fi.model.sleep.quality)$tTable[1,],NA ),
-                      c(summary(fi.model.sleep.time)$tTable[1,],NA )) )
-table.s4 <- rbind( table.s4, c( c(summary(fi.model)$tTable[2,],sqrt(summary(fi.model)$tTable[2, 4]**2/(summary(fi.model)$tTable[2, 4]**2+summary(fi.model)$tTable[2, 3])) ), 
-                                c(summary(fi.model.physically.tired)$tTable[2,],sqrt(summary(fi.model.physically.tired)$tTable[2, 4]**2/(summary(fi.model.physically.tired)$tTable[2, 4]**2+summary(fi.model.physically.tired)$tTable[2, 3])) ), 
-                                c(NA, NA, NA, NA, NA, NA),
-                                c(NA, NA, NA, NA, NA, NA),
-                                c(NA, NA, NA, NA, NA, NA)) )
-table.s4 <- rbind( table.s4, c( c(summary(fi.model)$tTable[3,],sqrt(summary(fi.model)$tTable[3, 4]**2/(summary(fi.model)$tTable[3, 4]**2+summary(fi.model)$tTable[3, 3])) ), 
-                                c(NA, NA, NA, NA, NA, NA), 
-                                c(summary(fi.model.mentally.tired)$tTable[2,],sqrt(summary(fi.model.mentally.tired)$tTable[2, 4]**2/(summary(fi.model.mentally.tired)$tTable[2, 4]**2+summary(fi.model.mentally.tired)$tTable[2, 3])) ),
-                                c(NA, NA, NA, NA, NA, NA),
-                                c(NA, NA, NA, NA, NA, NA)) )
-table.s4 <- rbind( table.s4, c( c(summary(fi.model)$tTable[4,],sqrt(summary(fi.model)$tTable[4, 4]**2/(summary(fi.model)$tTable[4, 4]**2+summary(fi.model)$tTable[4, 3])) ), 
-                                c(NA, NA, NA, NA, NA, NA), 
-                                c(NA, NA, NA, NA, NA, NA),
-                                c(summary(fi.model.sleep.quality)$tTable[2,],sqrt(summary(fi.model.sleep.quality)$tTable[2, 4]**2/(summary(fi.model.sleep.quality)$tTable[2, 4]**2+summary(fi.model.sleep.quality)$tTable[2, 3])) ),
-                                c(NA, NA, NA, NA, NA, NA)) )
-table.s4 <- rbind( table.s4, c( c(summary(fi.model)$tTable[5,],sqrt(summary(fi.model)$tTable[5, 4]**2/(summary(fi.model)$tTable[5, 4]**2+summary(fi.model)$tTable[5, 3])) ), 
-                                c(NA, NA, NA, NA, NA, NA), 
-                                c(NA, NA, NA, NA, NA, NA),
-                                c(NA, NA, NA, NA, NA, NA),
-                                c(summary(fi.model.sleep.time)$tTable[2,],sqrt(summary(fi.model.sleep.time)$tTable[2, 4]**2/(summary(fi.model.sleep.time)$tTable[2, 4]**2+summary(fi.model.sleep.time)$tTable[2, 3])) )) )
+table.s4 <- rbind( c( c(intervals(fi.model, which = "fixed")$fixed[1,c(1,3)],summary(fi.model)$tTable[1,],NA ), 
+                      c(intervals(fi.model.physically.tired, which = "fixed")$fixed[1,c(1,3)],summary(fi.model.physically.tired)$tTable[1,],NA ), 
+                      c(intervals(fi.model.mentally.tired, which = "fixed")$fixed[1,c(1,3)],summary(fi.model.mentally.tired)$tTable[1,],NA ),
+                      c(intervals(fi.model.sleep.quality, which = "fixed")$fixed[1,c(1,3)],summary(fi.model.sleep.quality)$tTable[1,],NA ),
+                      c(intervals(fi.model.sleep.time, which = "fixed")$fixed[1,c(1,3)],summary(fi.model.sleep.time)$tTable[1,],NA )) )
+
+table.s4 <- rbind( table.s4, c( c(intervals(fi.model, which = "fixed")$fixed[2,c(1,3)],summary(fi.model)$tTable[2,],sqrt(summary(fi.model)$tTable[2, 4]**2/(summary(fi.model)$tTable[2, 4]**2+summary(fi.model)$tTable[2, 3])) ), 
+                                c(intervals(fi.model.physically.tired, which = "fixed")$fixed[2,c(1,3)],summary(fi.model.physically.tired)$tTable[2,],sqrt(summary(fi.model.physically.tired)$tTable[2, 4]**2/(summary(fi.model.physically.tired)$tTable[2, 4]**2+summary(fi.model.physically.tired)$tTable[2, 3])) ), 
+                                c(NA, NA, NA, NA, NA, NA, NA, NA),
+                                c(NA, NA, NA, NA, NA, NA, NA, NA),
+                                c(NA, NA, NA, NA, NA, NA, NA, NA)) )
+table.s4 <- rbind( table.s4, c( c(intervals(fi.model, which = "fixed")$fixed[3,c(1,3)],summary(fi.model)$tTable[3,],sqrt(summary(fi.model)$tTable[3, 4]**2/(summary(fi.model)$tTable[3, 4]**2+summary(fi.model)$tTable[3, 3])) ), 
+                                c(NA, NA, NA, NA, NA, NA, NA, NA), 
+                                c(intervals(fi.model.mentally.tired, which = "fixed")$fixed[2,c(1,3)],summary(fi.model.mentally.tired)$tTable[2,],sqrt(summary(fi.model.mentally.tired)$tTable[2, 4]**2/(summary(fi.model.mentally.tired)$tTable[2, 4]**2+summary(fi.model.mentally.tired)$tTable[2, 3])) ),
+                                c(NA, NA, NA, NA, NA, NA, NA, NA),
+                                c(NA, NA, NA, NA, NA, NA, NA, NA)) )
+table.s4 <- rbind( table.s4, c( c(intervals(fi.model, which = "fixed")$fixed[4,c(1,3)],summary(fi.model)$tTable[4,],sqrt(summary(fi.model)$tTable[4, 4]**2/(summary(fi.model)$tTable[4, 4]**2+summary(fi.model)$tTable[4, 3])) ), 
+                                c(NA, NA, NA, NA, NA, NA, NA, NA), 
+                                c(NA, NA, NA, NA, NA, NA, NA, NA),
+                                c(intervals(fi.model.sleep.quality, which = "fixed")$fixed[2,c(1,3)],summary(fi.model.sleep.quality)$tTable[2,],sqrt(summary(fi.model.sleep.quality)$tTable[2, 4]**2/(summary(fi.model.sleep.quality)$tTable[2, 4]**2+summary(fi.model.sleep.quality)$tTable[2, 3])) ),
+                                c(NA, NA, NA, NA, NA, NA, NA, NA)) )
+table.s4 <- rbind( table.s4, c( c(intervals(fi.model, which = "fixed")$fixed[5,c(1,3)],summary(fi.model)$tTable[5,],sqrt(summary(fi.model)$tTable[5, 4]**2/(summary(fi.model)$tTable[5, 4]**2+summary(fi.model)$tTable[5, 3])) ), 
+                                c(NA, NA, NA, NA, NA, NA, NA, NA), 
+                                c(NA, NA, NA, NA, NA, NA, NA, NA),
+                                c(NA, NA, NA, NA, NA, NA, NA, NA),
+                                c(intervals(fi.model.sleep.time, which = "fixed")$fixed[2,c(1,3)],summary(fi.model.sleep.time)$tTable[2,],sqrt(summary(fi.model.sleep.time)$tTable[2, 4]**2/(summary(fi.model.sleep.time)$tTable[2, 4]**2+summary(fi.model.sleep.time)$tTable[2, 3])) )) )
 row.names( table.s4 ) <- c("Intercept", "Physical Tiredness", "Mental Tiredness", "Sleep Quality", "Sleep Time")
-write.table( round(table.s4,2), "tables/TableS4 - study1_fullfirstimpressions_ofpartner.csv", sep=",", na="")
+write.table( round(table.s4,2), "tables/TableS4 - study1_fullfirstimpressions_ofpartner.csv", sep=",", na="",col.names = NA)
 
 # Table S5: Full first impressions: tiredness/sleep -> partners firstimpressions of me (multivariate and bivariate models)
 fi.model2 <- lme( firstimpressions_by_partner ~ physically.tired + mentally.tired + sleep.quality + sleep.time, random=~1|Pair, data=Study1data, na.action="na.exclude" ); summary( fi.model2 )
@@ -276,33 +281,33 @@ fi.model.mentally.tired2 <- lme( firstimpressions_by_partner ~ mentally.tired, r
 fi.model.sleep.quality2 <- lme( firstimpressions_by_partner ~ sleep.quality, random=~1|Pair, data=Study1data, na.action="na.exclude" ); summary( fi.model.sleep.quality2 )
 fi.model.sleep.time2 <- lme( firstimpressions_by_partner ~ sleep.time, random=~1|Pair, data=Study1data, na.action="na.exclude" ); summary( fi.model.sleep.time2 )
 
-table.s5 <- rbind( c( c(summary(fi.model2)$tTable[1,],NA ), 
-                      c(summary(fi.model.physically.tired2)$tTable[1,],NA ), 
-                      c(summary(fi.model.mentally.tired2)$tTable[1,],NA ),
-                      c(summary(fi.model.sleep.quality2)$tTable[1,],NA ),
-                      c(summary(fi.model.sleep.time2)$tTable[1,],NA )) )
+table.s5 <- rbind( c( c(intervals(fi.model2, which = "fixed")$fixed[1,c(1,3)],summary(fi.model2)$tTable[1,],NA ), 
+                      c(intervals(fi.model.physically.tired2, which = "fixed")$fixed[1,c(1,3)],summary(fi.model.physically.tired2)$tTable[1,],NA ), 
+                      c(intervals(fi.model.mentally.tired2, which = "fixed")$fixed[1,c(1,3)],summary(fi.model.mentally.tired2)$tTable[1,],NA ),
+                      c(intervals(fi.model.sleep.quality2, which = "fixed")$fixed[1,c(1,3)],summary(fi.model.sleep.quality2)$tTable[1,],NA ),
+                      c(intervals(fi.model.sleep.time2, which = "fixed")$fixed[1,c(1,3)],summary(fi.model.sleep.time2)$tTable[1,],NA )) )
 
-table.s5 <- rbind( table.s5, c( c(summary(fi.model2)$tTable[2,],sqrt(summary(fi.model2)$tTable[2, 4]**2/(summary(fi.model2)$tTable[2, 4]**2+summary(fi.model2)$tTable[2, 3])) ), 
-                                c(summary(fi.model.physically.tired2)$tTable[2,],sqrt(summary(fi.model.physically.tired2)$tTable[2, 4]**2/(summary(fi.model.physically.tired2)$tTable[2, 4]**2+summary(fi.model.physically.tired2)$tTable[2, 3])) ), 
-                                c(NA, NA, NA, NA, NA, NA),
-                                c(NA, NA, NA, NA, NA, NA),
-                                c(NA, NA, NA, NA, NA, NA)) )
-table.s5 <- rbind( table.s5, c( c(summary(fi.model2)$tTable[3,],sqrt(summary(fi.model2)$tTable[3, 4]**2/(summary(fi.model2)$tTable[3, 4]**2+summary(fi.model2)$tTable[3, 3])) ), 
-                                c(NA, NA, NA, NA, NA, NA), 
-                                c(summary(fi.model.mentally.tired2)$tTable[2,],sqrt(summary(fi.model.mentally.tired2)$tTable[2, 4]**2/(summary(fi.model.mentally.tired2)$tTable[2, 4]**2+summary(fi.model.mentally.tired2)$tTable[2, 3])) ),
-                                c(NA, NA, NA, NA, NA, NA),
-                                c(NA, NA, NA, NA, NA, NA)) )
-table.s5 <- rbind( table.s5, c( c(summary(fi.model2)$tTable[4,],sqrt(summary(fi.model2)$tTable[4, 4]**2/(summary(fi.model2)$tTable[4, 4]**2+summary(fi.model2)$tTable[4, 3])) ), 
-                                c(NA, NA, NA, NA, NA, NA), 
-                                c(NA, NA, NA, NA, NA, NA),
-                                c(summary(fi.model.sleep.quality2)$tTable[2,],sqrt(summary(fi.model.sleep.quality2)$tTable[2, 4]**2/(summary(fi.model.sleep.quality2)$tTable[2, 4]**2+summary(fi.model.sleep.quality2)$tTable[2, 3])) ),
-                                c(NA, NA, NA, NA, NA, NA)) )
-table.s5 <- rbind( table.s5, c( c(summary(fi.model2)$tTable[5,],sqrt(summary(fi.model2)$tTable[5, 4]**2/(summary(fi.model2)$tTable[5, 4]**2+summary(fi.model2)$tTable[5, 3])) ), 
-                                c(NA, NA, NA, NA, NA, NA), 
-                                c(NA, NA, NA, NA, NA, NA),
-                                c(NA, NA, NA, NA, NA, NA),
-                                c(summary(fi.model.sleep.time2)$tTable[2,],sqrt(summary(fi.model.sleep.time2)$tTable[2, 4]**2/(summary(fi.model.sleep.time2)$tTable[2, 4]**2+summary(fi.model.sleep.time2)$tTable[2, 3])) )) )
+table.s5 <- rbind( table.s5, c( c(intervals(fi.model2, which = "fixed")$fixed[2,c(1,3)],summary(fi.model2)$tTable[2,],sqrt(summary(fi.model2)$tTable[2, 4]**2/(summary(fi.model2)$tTable[2, 4]**2+summary(fi.model2)$tTable[2, 3])) ), 
+                                c(intervals(fi.model.physically.tired2, which = "fixed")$fixed[2,c(1,3)],summary(fi.model.physically.tired2)$tTable[2,],sqrt(summary(fi.model.physically.tired2)$tTable[2, 4]**2/(summary(fi.model.physically.tired2)$tTable[2, 4]**2+summary(fi.model.physically.tired2)$tTable[2, 3])) ), 
+                                c(NA, NA, NA, NA, NA, NA, NA, NA),
+                                c(NA, NA, NA, NA, NA, NA, NA, NA),
+                                c(NA, NA, NA, NA, NA, NA, NA, NA)) )
+table.s5 <- rbind( table.s5, c( c(intervals(fi.model2, which = "fixed")$fixed[3,c(1,3)],summary(fi.model2)$tTable[3,],sqrt(summary(fi.model2)$tTable[3, 4]**2/(summary(fi.model2)$tTable[3, 4]**2+summary(fi.model2)$tTable[3, 3])) ), 
+                                c(NA, NA, NA, NA, NA, NA, NA, NA), 
+                                c(intervals(fi.model.mentally.tired2, which = "fixed")$fixed[2,c(1,3)],summary(fi.model.mentally.tired2)$tTable[2,],sqrt(summary(fi.model.mentally.tired2)$tTable[2, 4]**2/(summary(fi.model.mentally.tired2)$tTable[2, 4]**2+summary(fi.model.mentally.tired2)$tTable[2, 3])) ),
+                                c(NA, NA, NA, NA, NA, NA, NA, NA),
+                                c(NA, NA, NA, NA, NA, NA, NA, NA)) )
+table.s5 <- rbind( table.s5, c( c(intervals(fi.model2, which = "fixed")$fixed[4,c(1,3)],summary(fi.model2)$tTable[4,],sqrt(summary(fi.model2)$tTable[4, 4]**2/(summary(fi.model2)$tTable[4, 4]**2+summary(fi.model2)$tTable[4, 3])) ), 
+                                c(NA, NA, NA, NA, NA, NA, NA, NA), 
+                                c(NA, NA, NA, NA, NA, NA, NA, NA),
+                                c(intervals(fi.model.sleep.quality2, which = "fixed")$fixed[2,c(1,3)],summary(fi.model.sleep.quality2)$tTable[2,],sqrt(summary(fi.model.sleep.quality2)$tTable[2, 4]**2/(summary(fi.model.sleep.quality2)$tTable[2, 4]**2+summary(fi.model.sleep.quality2)$tTable[2, 3])) ),
+                                c(NA, NA, NA, NA, NA, NA, NA, NA)) )
+table.s5 <- rbind( table.s5, c( c(intervals(fi.model2, which = "fixed")$fixed[5,c(1,3)],summary(fi.model2)$tTable[5,],sqrt(summary(fi.model2)$tTable[5, 4]**2/(summary(fi.model2)$tTable[5, 4]**2+summary(fi.model2)$tTable[5, 3])) ), 
+                                c(NA, NA, NA, NA, NA, NA, NA, NA), 
+                                c(NA, NA, NA, NA, NA, NA, NA, NA),
+                                c(NA, NA, NA, NA, NA, NA, NA, NA),
+                                c(intervals(fi.model.sleep.time2, which = "fixed")$fixed[2,c(1,3)],summary(fi.model.sleep.time2)$tTable[2,],sqrt(summary(fi.model.sleep.time2)$tTable[2, 4]**2/(summary(fi.model.sleep.time2)$tTable[2, 4]**2+summary(fi.model.sleep.time2)$tTable[2, 3])) )) )
 row.names( table.s5 ) <- c("Intercept", "Physical Tiredness", "Mental Tiredness", "Sleep Quality", "Sleep Time")
-write.table( round(table.s5,2), "tables/TableS5 - study1_fullfirstimpressions_ofme.csv", sep=",", na="")
+write.table( round(table.s5,2), "tables/TableS5 - study1_fullfirstimpressions_ofme.csv", sep=",", na="",col.names = NA)
 ```
 
