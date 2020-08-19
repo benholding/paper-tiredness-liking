@@ -49,6 +49,7 @@ study2data <- within( study2data, {
   tiredness_centered <- scale(Tiredness, scale = F)
   sleep.quality_centered <- scale(Sleep_quality, scale = F)
   sleep.time_centered <- scale( TST_minutes, scale=F)
+  sleep.time.hours <- TST_minutes/60
 })
 
 ReverseScoringLiking_study2 <- study2data %>% group_by(Pair_ID) %>% mutate(Liked_by_partner = rev(liking))
@@ -81,14 +82,14 @@ with( study2data, {
 
 ### 2a. Multilevel model predicting how much people liked their partner
 ```{r}
-model1 <- lme( liking ~ Tiredness + Sleep_quality + TST_minutes, random=~1|Pair_ID, data=study2data, na.action="na.exclude" )
+model1 <- lme( liking ~ Tiredness + Sleep_quality + sleep.time.hours, random=~1|Pair_ID, data=study2data, na.action="na.exclude" )
 
 summary(model1)
 
 Figure2 <- plot_model(model1, type="pred", show.data =T, jitter=0.05, title = "") 
 Figure2$A <- Figure2$Tiredness + theme_bw() + scale_y_continuous(name="Liking one's partner", limits=c(1,7), breaks=seq(1,7), labels=paste(seq(1,7),sep=",")) + scale_x_continuous(name="Tiredness", limits=c(1,10), breaks=seq(1,10), labels=paste(seq(1,10),sep=","))+ labs(tag = "A")
 Figure2$B <- Figure2$Sleep_quality + theme_bw() + scale_y_continuous(name="Liking one's partner", limits=c(1,7), breaks=seq(1,7), labels=paste(seq(1,7),sep=",")) + scale_x_continuous(name="Sleep Quality", limits=c(1,5), breaks=seq(1,5), labels=paste(seq(1,5),sep=","))+ labs(tag = "B")
-Figure2$C <- Figure2$TST_minutes + theme_bw() + scale_y_continuous(name="Liking one's partner", limits=c(1,7), breaks=seq(1,7), labels=paste(seq(1,7),sep=",")) + scale_x_continuous(name="Sleep duration (hours)", limits=c(90,690), breaks=c(120,240,360,480,600), labels=c(2,4,6,8,10))+ labs(tag = "C")
+Figure2$C <- Figure2$sleep.time.hours + theme_bw() + scale_y_continuous(name="Liking one's partner", limits=c(1,7), breaks=seq(1,7), labels=paste(seq(1,7),sep=",")) + scale_x_continuous(name="Sleep duration (hours)", limits=c(1.5,10.5), breaks=c(2,4,6,8,10), labels=c(2,4,6,8,10))+ labs(tag = "C")
 
 Figure2$grid <- plot_grid(list(Figure2$A,Figure2$B,Figure2$C), margin = c(0.2, 0.2, 0.2, 0.2))
 ggsave(plot=Figure2$grid, "plots/Figure2.pdf", device = "pdf", units = "cm", width = 20, height = 20)
@@ -97,7 +98,7 @@ ggsave(plot=Figure2$grid, "plots/Figure2.pdf", device = "pdf", units = "cm", wid
 
 ### 2b. Multilevel model predicting how much people were liked by their partner
 ```{r}
-model2 <- lme( liked_by_partner ~ Tiredness + Sleep_quality + TST_minutes, random=~1|Pair_ID, data=study2data, na.action="na.exclude" )
+model2 <- lme( liked_by_partner ~ Tiredness + Sleep_quality + sleep.time.hours, random=~1|Pair_ID, data=study2data, na.action="na.exclude" )
 
 summary( model2 )
 ```
@@ -107,8 +108,8 @@ summary( model2 )
 
 # Figure S2: correlations between sleep/tiredness measures
 # Correlations Between Sleep Measures
-corr.test( study2data[,c( "Tiredness", "Sleep_quality", "TST_minutes" )] )
-correlation.matrix <- cor(study2data[,c( "Tiredness", "Sleep_quality", "TST_minutes" )], use="pairwise.complete.obs")
+corr.test( study2data[,c( "Tiredness", "Sleep_quality", "sleep.time.hours" )] )
+correlation.matrix <- cor(study2data[,c( "Tiredness", "Sleep_quality", "sleep.time.hours" )], use="pairwise.complete.obs")
 dimnames( correlation.matrix ) <- list(c("Tiredness", "Sleep Quality", "Sleep Time"),
                                                                 c("Tiredness", "Sleep Quality", "Sleep Time"))
 
@@ -120,7 +121,7 @@ dev.off()
 # Bivariate Analyses: tiredness/sleep -> how much I like partner
 model.tired <- lme( liking ~ Tiredness, random=~1|Pair_ID, data=study2data, na.action="na.exclude" ); summary( model.tired )
 model.sleep.quality <- lme( liking ~ Sleep_quality, random=~1|Pair_ID, data=study2data, na.action="na.exclude" ); summary( model.sleep.quality )
-model.sleep.time <- lme( liking ~ TST_minutes, random=~1|Pair_ID, data=study2data, na.action="na.exclude" ); summary( model.sleep.time )
+model.sleep.time <- lme( liking ~ sleep.time.hours, random=~1|Pair_ID, data=study2data, na.action="na.exclude" ); summary( model.sleep.time )
 
 table.s6 <- rbind( c( c(intervals(model1, which = "fixed")$fixed[1,c(1,3)],summary(model1)$tTable[1,],NA), 
                       c(intervals(model.tired, which = "fixed")$fixed[1,c(1,3)],summary(model.tired)$tTable[1,],NA ), 
@@ -150,7 +151,7 @@ write.table( round(table.s6,2), "tables/TableS6 - study2_howmuchilikepartner.csv
 # Bivariate Analyses: tiredness/sleep -> how much my partner likes me
 model.tired2 <- lme( liked_by_partner ~ Tiredness, random=~1|Pair_ID, data=study2data, na.action="na.exclude" ); summary( model.tired2 )
 model.sleep.quality2 <- lme( liked_by_partner ~ Sleep_quality, random=~1|Pair_ID, data=study2data, na.action="na.exclude" ); summary( model.sleep.quality2 )
-model.sleep.time2 <- lme( liked_by_partner ~ TST_minutes, random=~1|Pair_ID, data=study2data, na.action="na.exclude" ); summary( model.sleep.time2 )
+model.sleep.time2 <- lme( liked_by_partner ~ sleep.time.hours, random=~1|Pair_ID, data=study2data, na.action="na.exclude" ); summary( model.sleep.time2 )
 
 table.s7 <- rbind( c( c(intervals(model2, which = "fixed")$fixed[1,c(1,3)],summary(model2)$tTable[1,],NA), 
                       c(intervals(model.tired2, which = "fixed")$fixed[1,c(1,3)],summary(model.tired2)$tTable[1,],NA ), 
@@ -187,10 +188,10 @@ with(study2data, psych::alpha( cbind(X1FIMP1,X1FIMP2,X1FIMP3,X1FIMP4,X1FIMP5,X1F
 
 # Table S4: Full first impressions: tiredness/sleep -> firstimpressions of partner (multivariate and bivariate models)
 # Models with Full First Impressions Questionnaire
-fi.model <- lme( Firstimpressions ~  Tiredness + Sleep_quality + TST_minutes, random=~1|Pair_ID, data=study2data, na.action="na.exclude" ); summary( fi.model )
+fi.model <- lme( Firstimpressions ~  Tiredness + Sleep_quality + sleep.time.hours, random=~1|Pair_ID, data=study2data, na.action="na.exclude" ); summary( fi.model )
 fi.model.tired <- lme( Firstimpressions ~ Tiredness, random=~1|Pair_ID, data=study2data, na.action="na.exclude" ); summary( fi.model.tired )
 fi.model.sleep.quality <- lme( Firstimpressions ~ Sleep_quality, random=~1|Pair_ID, data=study2data, na.action="na.exclude" ); summary( fi.model.sleep.quality )
-fi.model.sleep.time <- lme( Firstimpressions ~ TST_minutes, random=~1|Pair_ID, data=study2data, na.action="na.exclude" ); summary( fi.model.sleep.time )
+fi.model.sleep.time <- lme( Firstimpressions ~ sleep.time.hours, random=~1|Pair_ID, data=study2data, na.action="na.exclude" ); summary( fi.model.sleep.time )
 
 table.s8 <- rbind( c( c(intervals(fi.model, which = "fixed")$fixed[1,c(1,3)],summary(fi.model)$tTable[1,],NA ), 
                       c(intervals(fi.model.tired, which = "fixed")$fixed[1,c(1,3)],summary(fi.model.tired)$tTable[1,],NA ),
@@ -217,10 +218,10 @@ row.names( table.s8 ) <- c("Intercept", "Tiredness", "Sleep Quality", "Sleep Tim
 write.table( round(table.s8,2), "tables/TableS8 - study2_fullfirstimpressions_ofpartner.csv", sep=",", na="",col.names = NA)
 
 # Table S9: Full first impressions: tiredness/sleep -> partners firstimpressions of me (multivariate and bivariate models)
-fi.model2 <- lme( Firstimpressions_by_partner ~  Tiredness + Sleep_quality + TST_minutes, random=~1|Pair_ID, data=study2data, na.action="na.exclude" ); summary( fi.model2 )
+fi.model2 <- lme( Firstimpressions_by_partner ~  Tiredness + Sleep_quality + sleep.time.hours, random=~1|Pair_ID, data=study2data, na.action="na.exclude" ); summary( fi.model2 )
 fi.model.tired2 <- lme( Firstimpressions_by_partner ~ Tiredness, random=~1|Pair_ID, data=study2data, na.action="na.exclude" ); summary( fi.model.tired2 )
 fi.model.sleep.quality2 <- lme( Firstimpressions_by_partner ~ Sleep_quality, random=~1|Pair_ID, data=study2data, na.action="na.exclude" ); summary( fi.model.sleep.quality2 )
-fi.model.sleep.time2 <- lme( Firstimpressions_by_partner ~ TST_minutes, random=~1|Pair_ID, data=study2data, na.action="na.exclude" ); summary( fi.model.sleep.time2 )
+fi.model.sleep.time2 <- lme( Firstimpressions_by_partner ~ sleep.time.hours, random=~1|Pair_ID, data=study2data, na.action="na.exclude" ); summary( fi.model.sleep.time2 )
 
 table.s9 <- rbind( c( c(intervals(fi.model2, which = "fixed")$fixed[1,c(1,3)],summary(fi.model2)$tTable[1,],NA ), 
                       c(intervals(fi.model.tired2, which = "fixed")$fixed[1,c(1,3)],summary(fi.model.tired2)$tTable[1,],NA ),

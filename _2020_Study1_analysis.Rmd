@@ -27,6 +27,7 @@ suppressPackageStartupMessages(ipak(packages))
 ###Next reading in the data
 ```{r}
 Study1data <- read.csv( "Sleep Dataset.csv" )
+Study1data <- Study1data[complete.cases(Study1data$ID),]
 
 ```
 
@@ -52,7 +53,7 @@ Study1data <- within( Study1data, {
   physically.tired <- INT3
   mentally.tired <- INT4
   sleep.quality <- Sleep_quality
-  sleep.time <- TST_minutes
+  sleep.time <- TST_minutes/60
   physically.tired_Centered <- scale(INT3, scale = F)
   mentally.tired_Centered <- scale(INT4, scale = F)
   sleep.quality_Centered <- scale(Sleep_quality, scale = F)
@@ -101,7 +102,7 @@ Figure1 <- plot_model(model1, type="pred", show.data =T, jitter=0.05, title = ""
 Figure1$A <- Figure1$physically.tired + theme_bw() + scale_y_continuous(name="Liking one's partner", limits=c(1,7), breaks=seq(1,7), labels=paste(seq(1,7),sep=",")) + scale_x_continuous(name="Physical Tiredness", limits=c(1,10), breaks=seq(1,10), labels=paste(seq(1,10),sep=",")) + labs(tag = "A")
 Figure1$B <- Figure1$mentally.tired + theme_bw() + scale_y_continuous(name="Liking one's partner", limits=c(1,7), breaks=seq(1,7), labels=paste(seq(1,7),sep=",")) + scale_x_continuous(name="Mental Tiredness", limits=c(1,10), breaks=seq(1,10), labels=paste(seq(1,10),sep=","))+ labs(tag = "B")
 Figure1$C <- Figure1$sleep.quality + theme_bw() + scale_y_continuous(name="Liking one's partner", limits=c(1,7), breaks=seq(1,7), labels=paste(seq(1,7),sep=",")) + scale_x_continuous(name="Sleep Quality", limits=c(1,5), breaks=seq(1,5), labels=paste(seq(1,5),sep=","))+ labs(tag = "C")
-Figure1$D <- Figure1$sleep.time + theme_bw() + scale_y_continuous(name="Liking one's partner", limits=c(1,7), breaks=seq(1,7), labels=paste(seq(1,7),sep=",")) + scale_x_continuous(name="Sleep duration (hours)", limits=c(90,690), breaks=c(120,240,360,480,600), labels=c(2,4,6,8,10))+ labs(tag = "D")
+Figure1$D <- Figure1$sleep.time + theme_bw() + scale_y_continuous(name="Liking one's partner", limits=c(1,7), breaks=seq(1,7), labels=paste(seq(1,7),sep=",")) + scale_x_continuous(name="Sleep duration (hours)", limits=c(1.5,10.5), breaks=c(2,4,6,8,10), labels=c(2,4,6,8,10))+ labs(tag = "D")
 
 Figure1$grid <- plot_grid(list(Figure1$A,Figure1$B,Figure1$C,Figure1$D), margin = c(0.2, 0.2, 0.2, 0.2))
 ggsave(plot=Figure1$grid, "plots/Figure1.pdf", device = "pdf", units = "cm", width = 20, height = 20)
